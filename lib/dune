@@ -1,0 +1,27 @@
+(library
+ (name jikan)
+ (libraries
+  dream
+  lwt
+  lwt.unix
+  cohttp
+  cohttp-lwt
+  cohttp-lwt-unix
+  uri
+  lambdasoup
+  yojson
+  caqti
+  caqti-lwt
+  caqti-lwt.unix
+  caqti-driver-sqlite3
+  logs
+  fmt
+  ptime
+  ptime.clock.os
+  re
+  str
+  unix)
+ (flags
+  (:standard -w +8 -warn-error +8))
+ (preprocess
+  (pps lwt_ppx)))

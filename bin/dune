@@ -1,0 +1,6 @@
+(executable
+ (name jikan_api)
+ (public_name jikan-api)
+ (libraries jikan dream lwt lwt.unix logs logs.fmt fmt ssl)
+ (preprocess
+  (pps lwt_ppx)))

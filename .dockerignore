@@ -1,0 +1,6 @@
+.git
+_build
+_opam
+.env
+data
+*.db

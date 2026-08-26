@@ -1,0 +1,9 @@
+_build
+_opam
+*.install
+.merlin
+.env
+data/
+*.db
+*.db-journal
+.DS_Store
