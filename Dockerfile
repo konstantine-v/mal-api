@@ -31,6 +31,7 @@ RUN apt-get update \
     libgmp10 \
     libev4 \
     ca-certificates \
+    netbase \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /data
 
