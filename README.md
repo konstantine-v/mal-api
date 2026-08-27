@@ -1,6 +1,6 @@
-# jikan-api
+# MAL-API
 
-Unofficial MyAnimeList REST API (Jikan v4 compatible). Scrapes MAL and serves JSON at `/v4`. Not affiliated with MyAnimeList.
+Unofficial MyAnimeList REST API (Jikan v4 compatible). Scrapes MAL and serves JSON at `/api`. Not affiliated with MyAnimeList or Jikan. This is a ocaml implementation of [jikan](https://github.com/jikan-me/jikan) by [jikan-me](https://github.com/jikan-me).
 
 ## Docker
 
@@ -10,10 +10,10 @@ docker compose up --build
 ```
 
 ```bash
-curl http://localhost:8080/v4/anime/1
+curl http://localhost:8080/api/anime/1
 ```
 
-Data is stored in the `jikan-data` volume (`CACHE_PATH=/data/jikan.db`).
+Data is stored in the `mal-data` volume (`CACHE_PATH=/data/mal.db`).
 
 ## Local
 
@@ -22,7 +22,7 @@ Needs OCaml 5.1+, opam, libsqlite3, libssl.
 ```bash
 opam install . --deps-only -y
 dune build
-dune exec -- jikan-api
+dune exec -- mal-api
 ```
 
 Default bind is `0.0.0.0:8080`. Override with `PORT`, `BIND`, and `CACHE_PATH` (see `.env.example`).
@@ -34,7 +34,7 @@ Streamable HTTP MCP is at `POST /mcp` (JSON-RPC). Point Cursor at:
 ```json
 {
   "mcpServers": {
-    "jikan": {
+    "mal": {
       "url": "http://localhost:8080/mcp"
     }
   }

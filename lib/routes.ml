@@ -26,7 +26,7 @@ let handler app =
       Dream.post "/mcp" (Mcp.post app);
       Dream.get "/mcp" Mcp.get;
       Dream.delete "/mcp" Mcp.delete;
-      Dream.scope "/v4" []
+      Dream.scope "/api" []
         [
           Dream.get "/anime" (fun req ->
               let%lwt r = Ops.search_anime app ~q:(q_of req) ~page:(page_of req) in

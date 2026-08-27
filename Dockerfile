@@ -11,14 +11,14 @@ RUN apt-get update \
 
 USER opam
 WORKDIR /home/opam/app
-COPY --chown=opam:opam dune-project jikan-api.opam* ./
+COPY --chown=opam:opam dune-project mal-api.opam* ./
 COPY --chown=opam:opam dune ./
 COPY --chown=opam:opam lib lib
 COPY --chown=opam:opam bin bin
 
 RUN opam install . --deps-only --yes \
   && eval "$(opam env)" \
-  && dune build --release bin/jikan_api.exe
+  && dune build --release bin/mal_api.exe
 
 FROM debian:bookworm-slim
 
@@ -31,13 +31,13 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /data
 
-COPY --from=build /home/opam/app/_build/default/bin/jikan_api.exe /usr/local/bin/jikan-api
+COPY --from=build /home/opam/app/_build/default/bin/mal_api.exe /usr/local/bin/mal-api
 
 ENV PORT=8080 \
     BIND=0.0.0.0 \
-    CACHE_PATH=/data/jikan.db
+    CACHE_PATH=/data/mal.db
 
 EXPOSE 8080
 VOLUME ["/data"]
 
-CMD ["jikan-api"]
+CMD ["mal-api"]

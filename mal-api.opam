@@ -3,8 +3,8 @@ opam-version: "2.0"
 synopsis: "Unofficial MyAnimeList REST API (Jikan v4 compatible)"
 description:
   "Self-hosted OCaml clone of Jikan REST v4. Scrapes MyAnimeList and serves the Jikan JSON contract."
-maintainer: ["jikan-api"]
-authors: ["jikan-api"]
+maintainer: ["mal-api"]
+authors: ["mal-api"]
 license: "MIT"
 depends: [
   "ocaml" {>= "5.1.0"}

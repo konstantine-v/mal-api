@@ -66,10 +66,10 @@ let initialize_result app params =
       ( "serverInfo",
         `Assoc
           [
-            ("name", `String "jikan-api");
+            ("name", `String "mal-api");
             ("version", `String app.App.cfg.app_version);
           ] );
-      ("instructions", `String "Each tool is a GET /v4 Jikan route.");
+      ("instructions", `String "Each tool is a GET /api MAL API route.");
     ]
 
 let tool_result ~is_error text =

@@ -4,6 +4,7 @@ type t = {
   port : int;
   bind : string;
   app_version : string;
+  github_url : string;
   cache_path : string;
   cache_default_expire : int;
   cache_meta_expire : int;
@@ -70,8 +71,9 @@ let load () =
   {
     port = getenv_int "PORT" 8080;
     bind = getenv_default "BIND" "0.0.0.0";
-    app_version = getenv_default "APP_VERSION" "4.2.2";
-    cache_path = getenv_default "CACHE_PATH" "data/jikan.db";
+    app_version = getenv_default "APP_VERSION" "1.1.0";
+    github_url = getenv_default "GITHUB_URL" "https://github.com/konstantine-v/mal-api";
+    cache_path = getenv_default "CACHE_PATH" "data/mal.db";
     cache_default_expire = getenv_int "CACHE_DEFAULT_EXPIRE" 86400;
     cache_meta_expire = getenv_int "CACHE_META_EXPIRE" 300;
     cache_user_expire = getenv_int "CACHE_USER_EXPIRE" 300;
@@ -89,7 +91,7 @@ let load () =
     source_good_health_score = getenv_float "SOURCE_GOOD_HEALTH_SCORE" 0.9;
     mal_user_agent =
       getenv_default "MAL_USER_AGENT"
-        "jikan-api/4.2.2 (https://github.com/jikan-me/jikan-rest)";
+        "mal-api/1.1.0 (https://github.com/konstantine-v/mal-api)";
     disable_user_lists = getenv_bool "DISABLE_USER_LISTS" false;
     log_level = parse_log_level (String.lowercase_ascii (getenv_default "LOG_LEVEL" "info"));
   }

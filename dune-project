@@ -1,17 +1,17 @@
 (lang dune 3.16)
 
-(name jikan-api)
+(name mal-api)
 
 (generate_opam_files true)
 
 (license MIT)
 
-(authors "jikan-api")
+(authors "mal-api")
 
-(maintainers "jikan-api")
+(maintainers "mal-api")
 
 (package
- (name jikan-api)
+ (name mal-api)
  (synopsis "Unofficial MyAnimeList REST API (Jikan v4 compatible)")
  (description
   "Self-hosted OCaml clone of Jikan REST v4. Scrapes MyAnimeList and serves the Jikan JSON contract.")

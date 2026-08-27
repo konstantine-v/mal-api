@@ -1,13 +1,13 @@
 services:
-  jikan-api:
+  mal-api:
     build: .
     ports:
       - "8080:8080"
     env_file:
       - .env
     volumes:
-      - jikan-data:/data
+      - mal-data:/data
     restart: unless-stopped
 
 volumes:
-  jikan-data:
+  mal-data:

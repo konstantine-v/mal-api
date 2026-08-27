@@ -40,16 +40,9 @@ let root app =
   let hb = app.App.heartbeat in
   `Assoc
     [
-      ("author_url", `String "https://github.com/jikan-me/jikan-rest");
-      ("discord_url", `String "http://discord.jikan.moe");
       ("version", `String app.cfg.app_version);
       ("parser_version", `String app.cfg.app_version);
-      ("website_url", `String "https://jikan.moe");
-      ("documentation_url", `String "https://docs.api.jikan.moe/");
-      ("github_url", `String "https://github.com/jikan-me/jikan-rest");
-      ("parser_github_url", `String "https://github.com/jikan-me/jikan");
-      ("production_api_url", `String "https://api.jikan.moe/v4/");
-      ("status_url", `String "https://status.jikan.moe");
+      ("github_url", `String app.cfg.github_url);
       ( "myanimelist_heartbeat",
         `Assoc
           [
