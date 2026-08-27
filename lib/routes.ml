@@ -19,12 +19,10 @@ let id_of req =
 let with_id req f =
   match id_of req with Error e -> Error.respond e | Ok id -> f id
 
-let ok_sync json = json_ok json
-
 let handler app =
   Dream.router
     [
-      Dream.get "/" (fun _req -> ok_sync (Ops.root app));
+      Dream.get "/" (fun _req -> json_ok (Ops.root app));
       Dream.post "/mcp" (Mcp.post app);
       Dream.get "/mcp" Mcp.get;
       Dream.delete "/mcp" Mcp.delete;
@@ -271,9 +269,9 @@ let handler app =
           Dream.get "/users" (fun req ->
               let%lwt r = Ops.search_users app ~q:(q_of req) ~page:(page_of req) in
               respond r);
-          Dream.get "/users/recentlyonline" (fun _req -> ok_sync (Ops.get_users_recentlyonline ()));
+          Dream.get "/users/recentlyonline" (fun _req -> json_ok (Ops.get_users_recentlyonline ()));
           Dream.get "/users/userbyid/:id" (fun req ->
-              ok_sync (Ops.get_user_by_id (Dream.param req "id")));
+              json_ok (Ops.get_user_by_id (Dream.param req "id")));
           Dream.get "/users/:username" (fun req ->
               let%lwt r = Ops.get_user app (Dream.param req "username") in
               respond r);
@@ -287,13 +285,13 @@ let handler app =
               let%lwt r = Ops.get_user_favorites app (Dream.param req "username") in
               respond r);
           Dream.get "/users/:username/userupdates" (fun _req ->
-              ok_sync (Ops.get_user_userupdates ()));
+              json_ok (Ops.get_user_userupdates ()));
           Dream.get "/users/:username/about" (fun req ->
               let%lwt r = Ops.get_user_about app (Dream.param req "username") in
               respond r);
-          Dream.get "/users/:username/history" (fun _req -> ok_sync (Ops.get_user_history ()));
+          Dream.get "/users/:username/history" (fun _req -> json_ok (Ops.get_user_history ()));
           Dream.get "/users/:username/history/:type" (fun req ->
-              ok_sync (Ops.get_user_history_type ~history_type:(Dream.param req "type")));
+              json_ok (Ops.get_user_history_type ~history_type:(Dream.param req "type")));
           Dream.get "/users/:username/friends" (fun req ->
               let%lwt r =
                 Ops.get_user_friends app (Dream.param req "username") ~page:(page_of req)
@@ -407,8 +405,8 @@ let handler app =
           Dream.get "/random/manga" (fun _req ->
               let%lwt r = Ops.get_random_manga app in
               respond r);
-          Dream.get "/random/characters" (fun _req -> ok_sync (Ops.get_random_characters ()));
-          Dream.get "/random/people" (fun _req -> ok_sync (Ops.get_random_people ()));
-          Dream.get "/random/users" (fun _req -> ok_sync (Ops.get_random_users ()));
+          Dream.get "/random/characters" (fun _req -> json_ok (Ops.get_random_characters ()));
+          Dream.get "/random/people" (fun _req -> json_ok (Ops.get_random_people ()));
+          Dream.get "/random/users" (fun _req -> json_ok (Ops.get_random_users ()));
         ];
     ]

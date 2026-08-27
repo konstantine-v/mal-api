@@ -29,27 +29,23 @@ let parse_id = function
   | _ -> Id_null
 
 let parse_message json =
-  match member "jsonrpc" json with
-  | Some (`String "2.0") -> (
-      match member "method" json with
-      | Some (`String method_) ->
-          let params = Option.value (member "params" json) ~default:(`Assoc []) in
-          (match member "id" json with
-          | None -> Ok (Notification { method_; params })
-          | Some id -> Ok (Request { id = parse_id id; method_; params }))
-      | _ -> Error "missing method")
+  match (member "jsonrpc" json, member "method" json) with
+  | Some (`String "2.0"), Some (`String method_) ->
+      let params = Option.value (member "params" json) ~default:(`Assoc []) in
+      (match member "id" json with
+      | None -> Ok (Notification { method_; params })
+      | Some id -> Ok (Request { id = parse_id id; method_; params }))
+  | Some (`String "2.0"), _ -> Error "missing method"
   | _ -> Error "invalid jsonrpc"
 
 let jsonrpc_error ~id ~code ~message =
-  let fields =
-    [ ("jsonrpc", `String "2.0"); ("error", `Assoc [ ("code", `Int code); ("message", `String message) ]) ]
-  in
-  let fields =
-    match id with
-    | None -> ("id", `Null) :: fields
-    | Some id -> ("id", id_to_yojson id) :: fields
-  in
-  `Assoc fields
+  let id_json = match id with None -> `Null | Some id -> id_to_yojson id in
+  `Assoc
+    [
+      ("jsonrpc", `String "2.0");
+      ("id", id_json);
+      ("error", `Assoc [ ("code", `Int code); ("message", `String message) ]);
+    ]
 
 let jsonrpc_result id result =
   `Assoc [ ("jsonrpc", `String "2.0"); ("id", id_to_yojson id); ("result", result) ]
@@ -73,38 +69,15 @@ let initialize_result app params =
             ("name", `String "jikan-api");
             ("version", `String app.App.cfg.app_version);
           ] );
-      ( "instructions",
-        `String "Unofficial MyAnimeList REST (Jikan v4). Use tools that map 1:1 to GET /v4 routes." );
+      ("instructions", `String "Each tool is a GET /v4 Jikan route.");
     ]
 
-let tool_result_ok json =
+let tool_result ~is_error text =
   `Assoc
     [
       ( "content",
-        `List
-          [
-            `Assoc
-              [
-                ("type", `String "text");
-                ("text", `String (Yojson.Safe.pretty_to_string json));
-              ];
-          ] );
-      ("isError", `Bool false);
-    ]
-
-let tool_result_error e =
-  `Assoc
-    [
-      ( "content",
-        `List
-          [
-            `Assoc
-              [
-                ("type", `String "text");
-                ("text", `String (Error.message e));
-              ];
-          ] );
-      ("isError", `Bool true);
+        `List [ `Assoc [ ("type", `String "text"); ("text", `String text) ] ] );
+      ("isError", `Bool is_error);
     ]
 
 let tools_list () =
@@ -113,10 +86,10 @@ let tools_list () =
       ( "tools",
         `List
           (List.map
-             (fun (t : Mcp_tools.t) ->
+             (fun t ->
                `Assoc
                  [
-                   ("name", `String t.name);
+                   ("name", `String t.Mcp_tools.name);
                    ("description", `String t.description);
                    ("inputSchema", t.input_schema);
                  ])
@@ -134,25 +107,20 @@ let call_tool app params =
   | None -> Lwt.return (Error (`Invalid_params ("unknown tool: " ^ name)))
   | Some t -> (
       match%lwt t.run app args with
-      | Ok json -> Lwt.return (Ok (tool_result_ok json))
-      | Error e -> Lwt.return (Ok (tool_result_error e)))
+      | Ok json -> Lwt.return (Ok (tool_result ~is_error:false (Yojson.Safe.pretty_to_string json)))
+      | Error e -> Lwt.return (Ok (tool_result ~is_error:true (Error.message e))))
 
 let handle_request app ~id method_ params =
   match method_ with
-  | "initialize" -> Lwt.return (`Resp (jsonrpc_result id (initialize_result app params)))
-  | "ping" -> Lwt.return (`Resp (jsonrpc_result id (`Assoc [])))
-  | "tools/list" -> Lwt.return (`Resp (jsonrpc_result id (tools_list ())))
+  | "initialize" -> Lwt.return (jsonrpc_result id (initialize_result app params))
+  | "ping" -> Lwt.return (jsonrpc_result id (`Assoc []))
+  | "tools/list" -> Lwt.return (jsonrpc_result id (tools_list ()))
   | "tools/call" -> (
       match%lwt call_tool app params with
-      | Ok result -> Lwt.return (`Resp (jsonrpc_result id result))
+      | Ok result -> Lwt.return (jsonrpc_result id result)
       | Error (`Invalid_params msg) ->
-          Lwt.return (`Resp (jsonrpc_error ~id:(Some id) ~code:(-32602) ~message:msg)))
-  | _ -> Lwt.return (`Resp (jsonrpc_error ~id:(Some id) ~code:(-32601) ~message:("method not found: " ^ method_)))
-
-let handle_notification method_ =
-  match method_ with
-  | "notifications/initialized" | "notifications/cancelled" -> `Accepted
-  | _ -> `Accepted
+          Lwt.return (jsonrpc_error ~id:(Some id) ~code:(-32602) ~message:msg))
+  | _ -> Lwt.return (jsonrpc_error ~id:(Some id) ~code:(-32601) ~message:("method not found: " ^ method_))
 
 let post app req =
   let%lwt body = Dream.body req in
@@ -168,12 +136,10 @@ let post app req =
       | Error msg ->
           json_response ~status:`Bad_Request
             (jsonrpc_error ~id:None ~code:(-32600) ~message:msg)
-      | Ok (Notification { method_; params = _ }) -> (
-          match handle_notification method_ with
-          | `Accepted -> Dream.empty `Accepted)
-      | Ok (Request { id; method_; params }) -> (
-          match%lwt handle_request app ~id method_ params with
-          | `Resp body -> json_response body))
+      | Ok (Notification _) -> Dream.empty `Accepted
+      | Ok (Request { id; method_; params }) ->
+          let%lwt body = handle_request app ~id method_ params in
+          json_response body)
 
 let get _req = Dream.empty `Method_Not_Allowed
 

@@ -26,10 +26,7 @@ let req_int name json =
 let opt_page json =
   match get_field "page" json with
   | None | Some `Null -> Ok 1
-  | Some v -> (
-      match as_int "page" v with
-      | Ok n -> Ok (max 1 n)
-      | Error e -> Error e)
+  | Some v -> Result.map (max 1) (as_int "page" v)
 
 let req_string name json =
   match get_field name json with
@@ -38,12 +35,10 @@ let req_string name json =
   | _ -> Error (Error.Bad_request (name ^ " is required"))
 
 let req_id json =
-  match req_int "id" json with
-  | Error e -> Error e
-  | Ok n -> (
-      match Mal_id.of_int n with
-      | Some id -> Ok id
-      | None -> Error (Error.Bad_request "id must be a positive integer"))
+  Result.bind (req_int "id" json) (fun n ->
+      Option.to_result
+        ~none:(Error.Bad_request "id must be a positive integer")
+        (Mal_id.of_int n))
 
 let ok_sync json = Lwt.return (Ok json)
 
@@ -80,6 +75,9 @@ let tool name description input_schema run = { name; description; input_schema; 
 
 let no_args name description run =
   tool name description empty_schema (fun app _args -> run app)
+
+let no_args_sync name description f =
+  no_args name description (fun _app -> ok_sync (f ()))
 
 let id_tool name description run =
   tool name description
@@ -228,8 +226,8 @@ let all : t list =
       Ops.get_producer_external;
     page_tool "get_magazines" "Magazines (GET /v4/magazines)" Ops.get_magazines;
     search_tool "search_users" "Search users (GET /v4/users)" Ops.search_users;
-    no_args "get_users_recentlyonline" "Recently online users (GET /v4/users/recentlyonline)"
-      (fun _app -> ok_sync (Ops.get_users_recentlyonline ()));
+    no_args_sync "get_users_recentlyonline" "Recently online users (GET /v4/users/recentlyonline)"
+      Ops.get_users_recentlyonline;
     id_tool "get_users_userbyid" "User by MAL id (GET /v4/users/userbyid/{id})" (fun _app id ->
         ok_sync (Ops.get_user_by_id (string_of_int (Mal_id.to_int id))));
     username_tool "get_user" "User profile (GET /v4/users/{username})" Ops.get_user;
@@ -316,12 +314,10 @@ let all : t list =
       Ops.get_watch_promos_popular;
     no_args "get_random_anime" "Random anime (GET /v4/random/anime)" Ops.get_random_anime;
     no_args "get_random_manga" "Random manga (GET /v4/random/manga)" Ops.get_random_manga;
-    no_args "get_random_characters" "Random character (GET /v4/random/characters)" (fun _app ->
-        ok_sync (Ops.get_random_characters ()));
-    no_args "get_random_people" "Random person (GET /v4/random/people)" (fun _app ->
-        ok_sync (Ops.get_random_people ()));
-    no_args "get_random_users" "Random user (GET /v4/random/users)" (fun _app ->
-        ok_sync (Ops.get_random_users ()));
+    no_args_sync "get_random_characters" "Random character (GET /v4/random/characters)"
+      Ops.get_random_characters;
+    no_args_sync "get_random_people" "Random person (GET /v4/random/people)" Ops.get_random_people;
+    no_args_sync "get_random_users" "Random user (GET /v4/random/users)" Ops.get_random_users;
   ]
 
 let by_name =

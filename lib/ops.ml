@@ -311,9 +311,7 @@ let get_magazines app ~page =
 
 let search_users app ~q ~page =
   search app ~kind:"profile"
-    ~url:(fun q page ->
-      ignore page;
-      Mal_url.search_users q)
+    ~url:(fun q _page -> Mal_url.search_users q)
     ~ttl:app.cfg.cache_search_expire ~q ~page
 
 let get_users_recentlyonline () = Json.data (`List [])
@@ -427,9 +425,7 @@ let get_top_reviews app ~page =
 
 let search_clubs app ~q ~page =
   search app ~kind:"club"
-    ~url:(fun q page ->
-      ignore page;
-      Mal_url.search_clubs q)
+    ~url:(fun q _page -> Mal_url.search_clubs q)
     ~ttl:app.cfg.cache_search_expire ~q ~page
 
 let get_club app id =
