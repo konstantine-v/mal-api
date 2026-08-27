@@ -27,6 +27,20 @@ dune exec -- jikan-api
 
 Default bind is `0.0.0.0:8080`. Override with `PORT`, `BIND`, and `CACHE_PATH` (see `.env.example`).
 
+## MCP
+
+Streamable HTTP MCP is at `POST /mcp` (JSON-RPC). Point Cursor at:
+
+```json
+{
+  "mcpServers": {
+    "jikan": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
 ## Notes
 
 Respect [MyAnimeList terms](https://myanimelist.net/about/terms_of_use). This service does not support authenticated list updates.
