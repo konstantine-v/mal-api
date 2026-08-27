@@ -4,6 +4,9 @@
 
 (generate_opam_files true)
 
+(source
+ (github konstantine-v/mal-api))
+
 (license MIT)
 
 (authors "mal-api")

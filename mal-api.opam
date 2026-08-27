@@ -6,6 +6,8 @@ description:
 maintainer: ["mal-api"]
 authors: ["mal-api"]
 license: "MIT"
+homepage: "https://github.com/konstantine-v/mal-api"
+bug-reports: "https://github.com/konstantine-v/mal-api/issues"
 depends: [
   "ocaml" {>= "5.1.0"}
   "dune" {>= "3.16"}
@@ -42,3 +44,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
+dev-repo: "git+https://github.com/konstantine-v/mal-api.git"

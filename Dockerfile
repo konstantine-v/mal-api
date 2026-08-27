@@ -6,6 +6,7 @@ RUN apt-get update \
     libsqlite3-dev \
     libssl-dev \
     libgmp-dev \
+    libev-dev \
     pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
@@ -27,6 +28,7 @@ RUN apt-get update \
     libsqlite3-0 \
     libssl3 \
     libgmp10 \
+    libev4 \
     ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /data
