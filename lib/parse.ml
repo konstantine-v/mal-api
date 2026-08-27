@@ -1,5 +1,8 @@
 open Soup
 
+let ( $$ ) soup selector = Html.select_nodes soup selector
+let ( $? ) soup selector = Html.select_node soup selector
+
 let parse_result f html =
   try Ok (f (Html.parse html)) with
   | exn -> Error (Error.Parse_error (Printexc.to_string exn))
@@ -73,7 +76,6 @@ let background soup =
 let relations soup =
   let from_table =
     soup $$ "table.entries-table tr"
-    |> to_list
     |> List.filter_map (fun tr ->
            match tr $? "td" with
            | None -> None
@@ -82,7 +84,7 @@ let relations soup =
                  Html.texts_of td |> Str.global_replace (Str.regexp ":") "" |> Html.trim
                in
                let entry =
-                 tr $$ "td a" |> to_list |> List.filter_map Html.mal_url_of_anchor
+                 tr $$ "td a"  |> List.filter_map Html.mal_url_of_anchor
                in
                if rel = "" then None
                else Some ({ Types.relation = rel; entry } : Types.relation))
@@ -91,7 +93,6 @@ let relations soup =
 
 let external_links soup =
   soup $$ "div.external_links a.link"
-  |> to_list
   |> List.filter_map (fun a ->
          match Html.attr_opt a "href" with
          | None -> None
@@ -102,7 +103,6 @@ let external_links soup =
 
 let streaming_links soup =
   soup $$ "div.broadcast a"
-  |> to_list
   |> List.filter_map (fun a ->
          match Html.attr_opt a "href" with
          | None -> None
@@ -113,7 +113,6 @@ let streaming_links soup =
 
 let theme_rows soup klass =
   soup $$ Printf.sprintf "div.theme-songs.%s tr, div.js-theme-songs.%s tr" klass klass
-  |> to_list
   |> List.map Html.texts_of
   |> List.filter (fun t ->
          t <> ""
@@ -358,10 +357,8 @@ let character_from_anchor a =
 
 let anime_characters soup =
   soup $$ "table.js-anime-character-table, table.js-manga-character-table, table[width=\"100%\"]"
-  |> to_list
   |> List.concat_map (fun table ->
-         table $$ "tr" |> to_list
-         |> List.filter_map (fun tr ->
+         table $$ "tr"          |> List.filter_map (fun tr ->
                 match tr $? "a[href*=\"/character/\"]" with
                 | None -> None
                 | Some a ->
@@ -374,7 +371,6 @@ let anime_characters soup =
                         in
                         let voice_actors =
                           tr $$ "a[href*=\"/people/\"]"
-                          |> to_list
                           |> List.filter_map (fun pa ->
                                  Option.map
                                    (fun p ->
@@ -400,7 +396,6 @@ let anime_characters soup =
 
 let anime_staff soup =
   soup $$ "a[href*=\"/people/\"]"
-  |> to_list
   |> List.filter_map (fun a ->
          match parent a with
          | None -> None
@@ -425,9 +420,8 @@ let anime_staff soup =
 
 let episodes soup =
   soup $$ "table.episode_list tr.episode-list-data, table.episode_list tr"
-  |> to_list
   |> List.filter_map (fun tr ->
-         let cells = tr $$ "td" |> to_list in
+         let cells = tr $$ "td"  in
          match cells with
          | num :: title_td :: _ ->
              let mal_id = int_of_string_opt (Html.texts_of num) in
@@ -480,7 +474,6 @@ let episode_page soup =
 
 let news soup =
   soup $$ "div.news-list .news-unit, div.news-unit"
-  |> to_list
   |> List.filter_map (fun n ->
          match n $? "p.title a, a.title, a[href*=\"/news/\"]" with
          | None -> None
@@ -515,7 +508,6 @@ let news soup =
 
 let forum soup =
   soup $$ "table.forum_topic tr, table tr"
-  |> to_list
   |> List.filter_map (fun tr ->
          match tr $? "a[href*=\"/forum/\"]" with
          | None -> None
@@ -539,7 +531,6 @@ let forum soup =
 let videos soup =
   let promo =
     soup $$ "div.video-list-outer, div.video-block a.video-list, a.iframe"
-    |> to_list
     |> List.filter_map (fun a ->
            match Html.attr_opt a "href" with
            | None -> None
@@ -557,7 +548,6 @@ let videos soup =
 
 let pictures soup =
   soup $$ "div.picSurround img, table img"
-  |> to_list
   |> List.filter_map (fun i ->
          match
            Option.fold ~none:(Html.attr_opt i "src") ~some:Option.some
@@ -604,7 +594,6 @@ let moreinfo soup =
   match soup $? "h2" with
   | _ ->
       soup $$ "h2"
-      |> to_list
       |> List.find_opt (fun n -> Html.texts_of n = "More Info")
       |> fun h ->
       match h with
@@ -616,7 +605,6 @@ let moreinfo soup =
 
 let recommendations soup =
   soup $$ "div.borderClass, div#content div[class*=\"spaceit\"]"
-  |> to_list
   |> List.filter_map (fun n ->
          match n $? "a[href*=\"/anime/\"], a[href*=\"/manga/\"]" with
          | None -> None
@@ -648,7 +636,6 @@ let recommendations soup =
 
 let reviews soup =
   soup $$ "div.review-element, div.borderDark"
-  |> to_list
   |> List.filter_map (fun n ->
          match n $? "a[href*=\"/reviews.php\"], a[href*=\"/profile/\"]" with
          | None -> None
@@ -686,28 +673,46 @@ let reviews soup =
                  : Types.review))
 
 let search_rows soup kind =
-  soup $$ "div.js-categories-seasonal .seasonal-anime, table a.hoverinfo_trigger, div.list table tr"
-  |> to_list
+  let href_sel = Printf.sprintf "a[href*=\"/%s/\"]" kind in
+  soup
+  $$ "div.js-categories-seasonal .seasonal-anime, table a.hoverinfo_trigger, div.list table tr"
   |> List.filter_map (fun n ->
-         let a =
-           n $? Printf.sprintf "a[href*=\"/%s/\"]" kind
-         in
-         match a with
-         | None -> None
-         | Some a -> Html.mal_url_of_anchor a)
+         match n $? href_sel with
+         | Some a -> Html.mal_url_of_anchor a
+         | None -> if name n = "a" then Html.mal_url_of_anchor n else None)
 
 let seasonal soup = search_rows soup "anime"
+
+let season_archive soup =
+  let add acc (year, season) =
+    let rec go = function
+      | [] -> [ (year, [ season ]) ]
+      | (y, ss) :: rest when y = year ->
+          ( y,
+            if List.mem season ss then ss else ss @ [ season ] )
+          :: rest
+      | x :: rest -> x :: go rest
+    in
+    go acc
+  in
+  soup $$ "table.anime-seasonal-byseason a"
+  |> List.filter_map (fun a ->
+         match String.split_on_char ' ' (Html.texts_of a) with
+         | [ season; year ] ->
+             Option.map
+               (fun y -> (y, String.lowercase_ascii season))
+               (int_of_string_opt year)
+         | _ -> None)
+  |> List.fold_left add []
 
 let top_list soup kind = search_rows soup kind
 
 let genres soup =
   soup $$ "a[href*=\"/genre/\"]"
-  |> to_list
   |> List.filter_map Html.mal_url_of_anchor
 
 let producers soup =
   soup $$ "a[href*=\"/producer/\"]"
-  |> to_list
   |> List.filter_map (fun a ->
          Option.map
            (fun u ->
@@ -742,7 +747,6 @@ let producer soup =
 
 let magazines soup =
   soup $$ "a[href*=\"/magazine/\"]"
-  |> to_list
   |> List.filter_map Html.mal_url_of_anchor
 
 let club soup =
@@ -806,7 +810,6 @@ let user_stats soup =
 
 let watch_episodes soup =
   soup $$ "div.video-block, div.watch-info"
-  |> to_list
   |> List.filter_map (fun n ->
          match n $? "a[href*=\"/anime/\"]" with
          | None -> None
@@ -831,17 +834,14 @@ let watch_episodes soup =
 
 let character_anime soup =
   soup $$ "table a[href*=\"/anime/\"]"
-  |> to_list
   |> List.filter_map Html.mal_url_of_anchor
 
 let character_manga soup =
   soup $$ "table a[href*=\"/manga/\"]"
-  |> to_list
   |> List.filter_map Html.mal_url_of_anchor
 
 let character_voices soup =
   soup $$ "a[href*=\"/people/\"]"
-  |> to_list
   |> List.filter_map person_from_anchor
 
 let parse_anime html = parse_result anime html
@@ -864,6 +864,7 @@ let parse_moreinfo html = parse_result moreinfo html
 let parse_recommendations html = parse_result recommendations html
 let parse_reviews html = parse_result reviews html
 let parse_seasonal html = parse_result seasonal html
+let parse_season_archive html = parse_result season_archive html
 let parse_top kind html = parse_result (fun s -> top_list s kind) html
 let parse_genres html = parse_result genres html
 let parse_producers html = parse_result producers html

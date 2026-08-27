@@ -2,6 +2,32 @@ open Soup
 
 let parse html = Soup.parse html
 
+let css_parts selector =
+  String.split_on_char ',' selector
+  |> List.map String.trim
+  |> List.filter (fun s -> s <> "")
+
+let unique_nodes nodes =
+  let rec go acc = function
+    | [] -> List.rev acc
+    | x :: xs ->
+        if List.exists (fun y -> y == x) acc then go acc xs else go (x :: acc) xs
+  in
+  go [] nodes
+
+let select_nodes soup selector =
+  css_parts selector
+  |> List.concat_map (fun sel -> soup $$ sel |> to_list)
+  |> unique_nodes
+
+let select_node soup selector =
+  let rec go = function
+    | [] -> None
+    | sel :: rest -> (
+        match soup $? sel with Some n -> Some n | None -> go rest)
+  in
+  go (css_parts selector)
+
 let trim s =
   let s = Str.global_replace (Str.regexp "[ \t\n\r]+") " " s in
   String.trim s
@@ -350,20 +376,19 @@ let youtube_from_href href =
         : Types.trailer)
   | None -> Types.empty_trailer
 
-let select_list soup selector = soup $$ selector |> to_list
+let select_list soup selector = select_nodes soup selector
 
 let first_text soup selector =
-  soup $? selector |> Option.map texts_of
+  select_node soup selector |> Option.map texts_of
 
 let pagination_from_html soup ~page ~per_page ~count =
   let last =
-    soup $$ ".pagination a, .pagination span, .link-hover-underline"
-    |> to_list
+    select_nodes soup ".pagination a, .pagination span, .link-hover-underline"
     |> List.filter_map (fun n -> int_of_string_opt (texts_of n))
     |> List.fold_left max page
   in
   let has_next =
-    match soup $? "a.next, a.link-hover-underline.next" with
+    match select_node soup "a.next, a.link-hover-underline.next" with
     | Some _ -> true
     | None -> last > page
   in

@@ -263,8 +263,17 @@ let get_person_pictures app id =
     ~parse:Parse.parse_pictures ~encode:(fun xs -> Json.list Types.picture_to_yojson xs)
 
 let get_seasons app =
-  fetch_data app ~url:Mal_url.season_archive ~ttl:app.cfg.cache_meta_expire ~parse:Parse.parse_seasonal
-    ~encode:(fun xs -> Json.list mal_url_entry xs)
+  fetch_data app ~url:Mal_url.season_archive ~ttl:app.cfg.cache_meta_expire
+    ~parse:Parse.parse_season_archive ~encode:(fun xs ->
+      Json.list
+        (fun (year, seasons) ->
+          `Assoc
+            [
+              ("year", `Int year);
+              ( "seasons",
+                `List (List.map (fun s -> `String s) seasons) );
+            ])
+        xs)
 
 let get_seasons_now app ~page =
   App.fetch app ~url:Mal_url.season_now ~ttl:app.cfg.cache_meta_expire ~parse:Parse.parse_seasonal
