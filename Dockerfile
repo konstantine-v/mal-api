@@ -11,6 +11,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 USER opam
+ENV OPAMSOLVERTIMEOUT=600
 WORKDIR /home/opam/app
 COPY --chown=opam:opam dune-project mal-api.opam* ./
 COPY --chown=opam:opam dune ./
